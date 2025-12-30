@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>해찌 노션 위젯 (캘린더 & 일기)</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Supabase 연동용 간단 위젯</p>
+      <h1>캘린더 & 일기</h1>
+      <p class="sub">Supabase 키만 넣으면 바로 노션에 임베드해서 쓸 수 있는 최소 기능 위젯입니다.</p>
+    </div>
+    <div class="status" id="connection-status">로컬 데모 모드</div>
+  </header>
+
+  <section class="card" id="supabase-config">
+    <div class="card-header">
+      <div>
+        <p class="eyebrow">연동 설정</p>
+        <h2>Supabase 연결</h2>
+        <p class="sub">프로젝트 URL과 anon/public 키를 입력하면 브라우저에서 바로 연결됩니다.</p>
+      </div>
+      <button id="clear-config" type="button" class="ghost">로컬 초기화</button>
+    </div>
+    <form id="config-form" class="grid">
+      <label class="field">
+        <span>Supabase URL</span>
+        <input id="supabase-url" name="supabaseUrl" placeholder="https://xxxx.supabase.co" required />
+      </label>
+      <label class="field">
+        <span>Supabase anon/public 키</span>
+        <input id="supabase-key" name="supabaseKey" placeholder="eyJhbGciOiJI..." required />
+      </label>
+      <button type="submit" class="primary">연결 저장</button>
+    </form>
+  </section>
+
+  <section class="widgets">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">달력</p>
+          <h2>캘린더</h2>
+        </div>
+        <div class="calendar-nav">
+          <button id="prev-month" type="button">◀</button>
+          <div id="month-label"></div>
+          <button id="next-month" type="button">▶</button>
+        </div>
+      </div>
+      <div class="calendar" id="calendar-grid"></div>
+      <div class="events">
+        <div class="events-header">
+          <h3 id="selected-date-label"></h3>
+        </div>
+        <ul id="event-list" class="list"></ul>
+      </div>
+      <form id="event-form" class="form">
+        <div class="card-subheader">
+          <h4>새 일정</h4>
+        </div>
+        <div class="grid">
+          <label class="field">
+            <span>날짜</span>
+            <input type="date" name="eventDate" required />
+          </label>
+          <label class="field">
+            <span>제목</span>
+            <input type="text" name="eventTitle" placeholder="할 일/행사" required />
+          </label>
+        </div>
+        <label class="field">
+          <span>메모 (선택)</span>
+          <textarea name="eventNotes" rows="2" placeholder="간단한 메모"></textarea>
+        </label>
+        <button class="primary" type="submit">일정 저장</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">일기</p>
+          <h2>일기 메모</h2>
+        </div>
+      </div>
+      <form id="diary-form" class="form">
+        <div class="grid">
+          <label class="field">
+            <span>날짜</span>
+            <input type="date" name="entryDate" required />
+          </label>
+          <label class="field">
+            <span>제목</span>
+            <input type="text" name="entryTitle" placeholder="오늘의 키워드" required />
+          </label>
+        </div>
+        <label class="field">
+          <span>내용</span>
+          <textarea name="entryContent" rows="4" placeholder="간단한 하루 기록" required></textarea>
+        </label>
+        <button class="primary" type="submit">일기 저장</button>
+      </form>
+      <div class="entries">
+        <div class="card-subheader">
+          <h4>최근 일기</h4>
+        </div>
+        <ul id="diary-list" class="list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footnote">
+    <p>Supabase 테이블만 준비하면 바로 작동합니다. 노션 임베드는 이 페이지를 공개 URL로 서빙한 뒤 사용하세요.</p>
+  </footer>
+
+  <script type="module" src="./index.js"></script>
+</body>
+</html>
