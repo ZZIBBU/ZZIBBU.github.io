@@ -233,7 +233,7 @@ async function showDateDetail(dateStr) {
               <div class="date-detail-event-priority" style="background: ${priorityColor}"></div>
               <div class="date-detail-event-title">${event.title || '제목 없음'}</div>
             </div>
-            ${event.assignee ? `<div class="date-detail-event-meta">담당자: ${event.assignee}</div>` : ''}
+            ${event.assignee ? `<div class="date-detail-event-meta">의뢰자: ${event.assignee}</div>` : ''}
             ${event.status ? `<div class="date-detail-event-status">${getStatusLabel(event.status)}</div>` : ''}
             ${event.notes ? `<div class="date-detail-event-notes">${event.notes}</div>` : ''}
           </div>

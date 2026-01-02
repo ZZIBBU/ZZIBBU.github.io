@@ -200,7 +200,7 @@ class EventManager {
         <button type="button" class="event-item-edit" data-event-id="${event.id}" aria-label="수정">✎</button>
       </div>
       <div class="event-item-body">
-        ${event.assignee ? `<div class="event-item-meta"><span class="event-item-label">담당자:</span> ${event.assignee}</div>` : ''}
+        ${event.assignee ? `<div class="event-item-meta"><span class="event-item-label">의뢰자:</span> ${event.assignee}</div>` : ''}
         <div class="event-item-meta">
           <span class="event-item-label">상태:</span>
           <span class="event-item-status">${statusLabels[status] || status}</span>

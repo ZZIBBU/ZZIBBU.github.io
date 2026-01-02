@@ -1935,6 +1935,283 @@ body:has(.link-cards-container) {
   }
 }
 
+/* ===== 작업 대시보드 ===== */
+.work-dashboard-body {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  min-height: auto;
+}
+
+.work-dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 600px;
+}
+
+.work-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.work-dashboard-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.work-dashboard-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.work-section {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.work-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.work-section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.work-section-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(226, 232, 240, 0.6);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.work-section-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(248, 250, 252, 1);
+  border-color: var(--primary);
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.work-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.work-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.work-item {
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 10px;
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.work-item:hover {
+  background: rgba(248, 250, 252, 1);
+  border-color: rgba(226, 232, 240, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.work-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.work-item-priority {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.work-item-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.work-item-status {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.work-item-status.status-todo {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.work-item-status.status-progress {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.work-item-status.status-done {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.work-item-status.status-cancelled {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.work-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.work-item-meta {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.work-item-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.work-item-notes {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== 지난 작업 ===== */
+.past-work-body {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  min-height: auto;
+}
+
+.past-work-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 600px;
+}
+
+.past-work-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.past-work-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.past-work-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.past-work-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.past-work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .work-dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .work-section {
+    min-height: 300px;
+  }
+}
+
 /* 일정 날짜별 섹션 */
 .event-date-section {
   margin-bottom: 24px;
