@@ -1,34 +1,14 @@
 import {
-  bootstrapConfig,
-  clearConfig,
-  connectSupabase,
-  deleteCalendarEvent,
   fetchCalendarEvents,
   fetchDiaryMarkers,
-  formatDate,
-  getSupabaseClient,
-  saveConfig,
-  setStatus,
-  storeCalendarEvent
+  formatDate
 } from './diary-utils.js'
-
-const connectionStatusEl = document.querySelector('#connection-status')
-const configForm = document.querySelector('#config-form')
-const clearConfigBtn = document.querySelector('#clear-config')
-const supabaseUrlInput = document.querySelector('#supabase-url')
-const supabaseKeyInput = document.querySelector('#supabase-key')
 
 const calendarGrid = document.querySelector('#calendar-grid')
 const monthLabel = document.querySelector('#month-label')
 const prevMonthBtn = document.querySelector('#prev-month')
 const nextMonthBtn = document.querySelector('#next-month')
-const selectedDateLabel = document.querySelector('#selected-date-label')
 const weekdayRow = document.querySelector('#weekday-row')
-const diaryStateText = document.querySelector('#diary-state-text')
-const modeBadge = document.querySelector('#mode-badge')
-const eventList = document.querySelector('#event-list')
-const eventCountBadge = document.querySelector('#event-count')
-const eventForm = document.querySelector('#event-form')
 
 const today = new Date()
 
@@ -103,61 +83,19 @@ function renderCalendar() {
       <div class="number">${day.getDate()}</div>
       <div class="markers">
         <div class="dots">${dots}</div>
-        <span class="diary-flag ${hasDiary ? 'done' : 'empty'}">${hasDiary ? '일기 ✔' : '일기 없음'}</span>
+        ${hasDiary ? '<span class="diary-flag done">✓</span>' : ''}
       </div>
     `
 
     cell.addEventListener('click', () => {
       state.selectedDate = dateStr
       renderCalendar()
-      renderEvents()
     })
 
     calendarGrid.appendChild(cell)
   })
 }
 
-function renderEvents() {
-  const selected = state.selectedDate
-  const eventsByDate = groupByDate(state.events, 'event_date')
-  const items = eventsByDate[selected] || []
-  const hasDiary = state.diaryDates.has(selected)
-
-  selectedDateLabel.textContent = `${selected} 일정`
-  diaryStateText.textContent = hasDiary ? '이 날짜는 일기가 작성되었습니다.' : '아직 일기가 없습니다.'
-  eventCountBadge.textContent = `${items.length}개`
-
-  eventList.innerHTML = ''
-  if (!items.length) {
-    const empty = document.createElement('li')
-    empty.textContent = '일정이 없습니다.'
-    empty.className = 'muted'
-    eventList.appendChild(empty)
-    return
-  }
-
-  items.forEach((item) => {
-    const li = document.createElement('li')
-    li.innerHTML = `
-      <div class="badge">${item.event_date}</div>
-      <h4>${item.title}</h4>
-      <p class="muted small">${item.notes || '메모 없음'}</p>
-    `
-    const removeBtn = document.createElement('button')
-    removeBtn.className = 'ghost danger'
-    removeBtn.textContent = '삭제'
-    removeBtn.addEventListener('click', async () => {
-      const success = await deleteCalendarEvent(item.id, {
-        onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
-      })
-      if (success) {
-        await loadData()
-      }
-    })
-    li.appendChild(removeBtn)
-    eventList.appendChild(li)
-  })
-}
 
 async function loadData() {
   const start = new Date(state.month.getFullYear(), state.month.getMonth(), 1)
@@ -168,71 +106,19 @@ async function loadData() {
   const [events, diaryDates] = await Promise.all([
     fetchCalendarEvents({
       fromDate,
-      toDate,
-      onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
+      toDate
     }),
     fetchDiaryMarkers({
       fromDate,
-      toDate,
-      onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
+      toDate
     })
   ])
 
   state.events = events
   state.diaryDates = new Set(diaryDates)
-  modeBadge.textContent = getSupabaseClient() ? 'Supabase' : '로컬'
 
   renderCalendar()
-  renderEvents()
 }
-
-function initConfig() {
-  bootstrapConfig({
-    statusEl: connectionStatusEl,
-    urlInput: supabaseUrlInput,
-    keyInput: supabaseKeyInput
-  })
-  modeBadge.textContent = getSupabaseClient() ? 'Supabase' : '로컬'
-}
-
-configForm.addEventListener('submit', (event) => {
-  event.preventDefault()
-  const formData = new FormData(event.target)
-  const url = formData.get('supabaseUrl')
-  const key = formData.get('supabaseKey')
-  saveConfig({ url, key })
-  connectSupabase({ url, key }, connectionStatusEl)
-  modeBadge.textContent = 'Supabase'
-  loadData()
-})
-
-clearConfigBtn.addEventListener('click', () => {
-  clearConfig({ statusEl: connectionStatusEl, urlInput: supabaseUrlInput, keyInput: supabaseKeyInput })
-  modeBadge.textContent = '로컬'
-  loadData()
-})
-
-eventForm.addEventListener('submit', async (event) => {
-  event.preventDefault()
-  const formData = new FormData(event.target)
-  const payload = {
-    event_date: formData.get('eventDate'),
-    title: formData.get('eventTitle'),
-    notes: formData.get('eventNotes') || ''
-  }
-
-  await storeCalendarEvent(payload, {
-    onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
-  })
-
-  state.selectedDate = payload.event_date
-  state.month = new Date(new Date(payload.event_date).getFullYear(), new Date(payload.event_date).getMonth(), 1)
-  event.target.reset()
-  event.target.eventDate.value = payload.event_date
-  // 최신 데이터를 다시 불러와 반영
-  await loadData()
-})
-
 prevMonthBtn.addEventListener('click', () => {
   state.month = new Date(state.month.getFullYear(), state.month.getMonth() - 1, 1)
   loadData()
@@ -243,10 +129,17 @@ nextMonthBtn.addEventListener('click', () => {
   loadData()
 })
 
+// 키보드 네비게이션 지원
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' && !e.target.matches('input, textarea')) {
+    prevMonthBtn.click()
+  } else if (e.key === 'ArrowRight' && !e.target.matches('input, textarea')) {
+    nextMonthBtn.click()
+  }
+})
+
 document.addEventListener('DOMContentLoaded', () => {
   renderWeekdays()
-  initConfig()
   state.selectedDate = formatDate(today)
-  eventForm.eventDate.value = formatDate(today)
   loadData()
 })

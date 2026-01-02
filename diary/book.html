@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>다이어리 북 위젯</title>
+  <title>다이어리 북</title>
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body class="book-only">
@@ -11,20 +11,21 @@
     <div class="page-turner">
       <div class="page-stage">
         <div class="diary-book modern-book">
+          <!-- 기본 스프레드: 왼쪽 페이지 (이미지 슬롯들) + 오른쪽 빈 페이지 -->
           <div class="book-spread base-spread" data-page-surface>
             <div class="book-page page-left" data-page-surface>
               <div class="page-grid page-grid-left">
                 <div class="image-slot wide-top" data-slot="top-banner">
-                  <span class="slot-label">상단 통합 이미지</span>
+                  <span class="slot-label">이미지</span>
                 </div>
                 <div class="image-slot tall-left" data-slot="stack-left">
-                  <span class="slot-label">중단/하단 좌측 이미지</span>
+                  <span class="slot-label">이미지</span>
                 </div>
                 <div class="image-slot calendar-slot" data-slot="calendar">
-                  <span class="slot-label">캘린더 이미지</span>
+                  <span class="slot-label">캘린더</span>
                 </div>
                 <div class="image-slot" data-slot="bottom-right">
-                  <span class="slot-label">하단 우측 이미지</span>
+                  <span class="slot-label">이미지</span>
                 </div>
               </div>
             </div>
@@ -36,34 +37,36 @@
             </div>
           </div>
 
+          <!-- 페이지 시트: 뒤집을 수 있는 페이지들 -->
           <div class="page-sheet" id="page-sheet">
+            <!-- 앞면: 일기 보기 모드 (오른쪽 페이지) -->
             <div class="page-face front-face" data-page-surface>
               <div class="book-page page-right turning-page">
                 <div class="page-grid page-grid-right">
                   <div class="entry-slot" id="slot-yesterday">
                     <div class="entry-header">
-                      <span class="label-box" data-label="yesterday">yesterday</span>
+                      <span class="label-box" data-label="yesterday">어제</span>
                     </div>
                     <div class="entry-body"></div>
                   </div>
                   <div class="entry-slot" id="slot-prior">
                     <div class="entry-header">
-                      <span class="label-box" data-label="prior">the day before yesterday</span>
+                      <span class="label-box" data-label="prior">그제</span>
                     </div>
                     <div class="entry-body"></div>
                   </div>
                   <div class="entry-slot" id="slot-month">
                     <div class="entry-header">
-                      <span class="label-box" data-label="month">a month ago</span>
+                      <span class="label-box" data-label="month">한 달 전</span>
                     </div>
                     <div class="entry-body"></div>
                   </div>
                   <div class="image-slot right-image" data-slot="diary-image">
-                    <span class="slot-label">다이어리 이미지</span>
+                    <span class="slot-label">이미지</span>
                   </div>
                   <div class="music-slot" id="music-note">
-                    <p class="eyebrow">노래 기능</p>
-                    <p class="muted">연동 예정 — 곡/플레이리스트 정보를 표시할 공간입니다.</p>
+                    <p class="eyebrow">음악</p>
+                    <p class="muted">연동 예정</p>
                   </div>
                   <div class="date-slot" id="today-date">
                     <strong>--월 --일</strong>
@@ -72,50 +75,47 @@
               </div>
             </div>
 
+            <!-- 뒷면: 일기 쓰기 모드 -->
             <div class="page-face back-face" data-page-surface>
-              <div class="book-page page-left turning-page">
-                <div class="write-page">
-                  <div class="write-page-header">
-                    <div>
-                      <p class="eyebrow">일기쓰기</p>
-                      <h2>오늘의 페이지</h2>
-                      <p class="muted" data-write-date>--월 --일의 기록을 남겨보세요.</p>
+              <div class="write-pages-container" id="write-pages-container">
+                <!-- 첫 번째 쓰기 페이지 (왼쪽) -->
+                <div class="book-page page-left turning-page write-page-wrapper" data-write-page="0">
+                  <div class="write-page">
+                    <div class="write-page-body">
+                      <form id="diary-form" class="form book-form">
+                        <div class="write-form-header">
+                          <label class="field">
+                            <span>날짜</span>
+                            <input type="date" name="entryDate" required />
+                          </label>
+                          <label class="field">
+                            <span>제목</span>
+                            <input type="text" name="entryTitle" placeholder="오늘의 키워드" required />
+                          </label>
+                        </div>
+                        <label class="field write-content-field">
+                          <span>내용</span>
+                          <textarea name="entryContent" id="entry-content-textarea" rows="8" placeholder="자유롭게 기록하세요..." required></textarea>
+                        </label>
+                        <div class="button-row end">
+                          <button class="primary" type="submit">저장하기</button>
+                        </div>
+                      </form>
                     </div>
-                    <div class="badge" id="write-mode">로컬</div>
-                  </div>
-
-                  <div class="write-page-body">
-                    <form id="diary-form" class="form book-form">
-                      <div class="grid">
-                        <label class="field">
-                          <span>날짜</span>
-                          <input type="date" name="entryDate" required />
-                        </label>
-                        <label class="field">
-                          <span>제목</span>
-                          <input type="text" name="entryTitle" placeholder="오늘의 키워드" required />
-                        </label>
-                      </div>
-                      <label class="field">
-                        <span>내용</span>
-                        <textarea name="entryContent" rows="6" placeholder="책에 적듯이 자유롭게 메모" required></textarea>
-                      </label>
-                      <div class="button-row end">
-                        <button class="primary" type="submit">저장하기</button>
-                      </div>
-                    </form>
                   </div>
                 </div>
+                <!-- 추가 쓰기 페이지들은 JavaScript로 동적 생성됨 -->
               </div>
             </div>
           </div>
         </div>
 
+        <!-- 페이지 네비게이션 버튼 -->
         <div class="page-nav">
-          <button class="page-button" type="button" id="turn-left" aria-label="왼쪽으로 넘기기">
+          <button class="page-button" type="button" id="turn-left" aria-label="이전 페이지">
             ◀
           </button>
-          <button class="page-button" type="button" id="turn-right" aria-label="오른쪽으로 넘기기">
+          <button class="page-button" type="button" id="turn-right" aria-label="다음 페이지">
             ▶
           </button>
         </div>
