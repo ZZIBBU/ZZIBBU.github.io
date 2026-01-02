@@ -7,58 +7,13 @@
   <link rel="stylesheet" href="../style.css" />
 </head>
 <body>
-  <header class="hero">
-    <div>
-      <p class="eyebrow">캘린더</p>
-      <h1>할 일 & 일기 체크 캘린더</h1>
-      <p class="sub">Supabase에 저장되는 일정/일기 여부 확인용 위젯입니다. 노션에 임베드해서 쓰세요.</p>
-    </div>
-    <div class="status" id="connection-status">로컬 데모 모드</div>
-  </header>
-
-  <section class="card" id="supabase-config">
-    <div class="card-header">
-      <div>
-        <p class="eyebrow">연동 설정</p>
-        <h2>Supabase 연결</h2>
-        <p class="sub">프로젝트 URL과 anon/public 키를 입력 후 저장하세요.</p>
-      </div>
-      <button id="clear-config" type="button" class="ghost">로컬 초기화</button>
-    </div>
-    <form id="config-form" class="grid">
-      <label class="field">
-        <span>Supabase URL</span>
-        <input id="supabase-url" name="supabaseUrl" placeholder="https://xxxx.supabase.co" required />
-      </label>
-      <label class="field">
-        <span>Supabase anon/public 키</span>
-        <input id="supabase-key" name="supabaseKey" placeholder="eyJhbGciOiJI..." required />
-      </label>
-      <button type="submit" class="primary">연결 저장</button>
-    </form>
-  </section>
-
   <section class="card calendar-card">
     <div class="card-header">
-      <div>
-        <p class="eyebrow">달력</p>
-        <h2>이번 달 일정과 일기</h2>
-        <p class="sub">일정을 추가/삭제하고, 날짜별 일기 작성 여부를 한눈에 확인하세요.</p>
-      </div>
       <div class="calendar-nav">
-        <button id="prev-month" type="button">◀</button>
-        <div id="month-label"></div>
-        <button id="next-month" type="button">▶</button>
+        <button id="prev-month" type="button" aria-label="이전 달">◀</button>
+        <div id="month-label" class="month-label"></div>
+        <button id="next-month" type="button" aria-label="다음 달">▶</button>
       </div>
-    </div>
-
-    <div class="card-subheader">
-      <div>
-        <p class="eyebrow">선택한 날짜</p>
-        <h3 id="selected-date-label"></h3>
-        <p class="muted" id="diary-state-text">일기 작성 여부를 확인 중...</p>
-      </div>
-      <div class="badge" id="mode-badge">로컬</div>
     </div>
 
     <div class="calendar-meta">
@@ -66,54 +21,31 @@
       <div class="legend">
         <span class="legend-item">
           <span class="dot event"></span>
-          일정 있음
+          <span>일정</span>
         </span>
         <span class="legend-item">
-          <span class="diary-flag done">일기 ✔</span>
-          일기 작성
-        </span>
-        <span class="legend-item">
-          <span class="diary-flag empty">일기 없음</span>
-          미작성
+          <span class="diary-flag done">✓</span>
+          <span>일기</span>
         </span>
       </div>
     </div>
 
     <div class="calendar" id="calendar-grid"></div>
-
-    <div class="events">
-      <div class="card-subheader">
-        <h4>일정</h4>
-        <div class="badge" id="event-count">0개</div>
-      </div>
-      <ul id="event-list" class="list"></ul>
-    </div>
-
-    <form id="event-form" class="form">
-      <div class="card-subheader">
-        <h4>새 일정</h4>
-      </div>
-      <div class="grid">
-        <label class="field">
-          <span>날짜</span>
-          <input type="date" name="eventDate" required />
-        </label>
-        <label class="field">
-          <span>제목</span>
-          <input type="text" name="eventTitle" placeholder="할 일/행사" required />
-        </label>
-      </div>
-      <label class="field">
-        <span>메모 (선택)</span>
-        <textarea name="eventNotes" rows="2" placeholder="간단한 메모"></textarea>
-      </label>
-      <button class="primary" type="submit">일정 저장</button>
-    </form>
   </section>
 
-  <footer class="footnote">
-    <p>Supabase 키를 넣으면 실제 테이블과 연동됩니다. 노션 임베드에서는 위젯 가로폭에 맞춰 반응형으로 표시됩니다.</p>
-  </footer>
+  <!-- 날짜 상세 팝업 -->
+  <div id="date-detail-modal" class="date-detail-modal" style="display: none;">
+    <div class="date-detail-overlay"></div>
+    <div class="date-detail-content">
+      <div class="date-detail-header">
+        <h3 id="date-detail-title">날짜 상세</h3>
+        <button type="button" id="close-detail-modal" class="icon-btn-small" aria-label="닫기">×</button>
+      </div>
+      <div class="date-detail-body" id="date-detail-body">
+        <!-- 내용이 여기에 동적으로 로드됩니다 -->
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./calendar.js"></script>
 </body>

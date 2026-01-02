@@ -1,34 +1,15 @@
 import {
-  bootstrapConfig,
-  clearConfig,
-  connectSupabase,
-  deleteCalendarEvent,
   fetchCalendarEvents,
   fetchDiaryMarkers,
-  formatDate,
-  getSupabaseClient,
-  saveConfig,
-  setStatus,
-  storeCalendarEvent
+  fetchDiaries,
+  formatDate
 } from './diary-utils.js'
-
-const connectionStatusEl = document.querySelector('#connection-status')
-const configForm = document.querySelector('#config-form')
-const clearConfigBtn = document.querySelector('#clear-config')
-const supabaseUrlInput = document.querySelector('#supabase-url')
-const supabaseKeyInput = document.querySelector('#supabase-key')
 
 const calendarGrid = document.querySelector('#calendar-grid')
 const monthLabel = document.querySelector('#month-label')
 const prevMonthBtn = document.querySelector('#prev-month')
 const nextMonthBtn = document.querySelector('#next-month')
-const selectedDateLabel = document.querySelector('#selected-date-label')
 const weekdayRow = document.querySelector('#weekday-row')
-const diaryStateText = document.querySelector('#diary-state-text')
-const modeBadge = document.querySelector('#mode-badge')
-const eventList = document.querySelector('#event-list')
-const eventCountBadge = document.querySelector('#event-count')
-const eventForm = document.querySelector('#event-form')
 
 const today = new Date()
 
@@ -103,61 +84,20 @@ function renderCalendar() {
       <div class="number">${day.getDate()}</div>
       <div class="markers">
         <div class="dots">${dots}</div>
-        <span class="diary-flag ${hasDiary ? 'done' : 'empty'}">${hasDiary ? '일기 ✔' : '일기 없음'}</span>
+        ${hasDiary ? '<span class="diary-flag done">✓</span>' : ''}
       </div>
     `
 
     cell.addEventListener('click', () => {
       state.selectedDate = dateStr
       renderCalendar()
-      renderEvents()
+      showDateDetail(dateStr)
     })
 
     calendarGrid.appendChild(cell)
   })
 }
 
-function renderEvents() {
-  const selected = state.selectedDate
-  const eventsByDate = groupByDate(state.events, 'event_date')
-  const items = eventsByDate[selected] || []
-  const hasDiary = state.diaryDates.has(selected)
-
-  selectedDateLabel.textContent = `${selected} 일정`
-  diaryStateText.textContent = hasDiary ? '이 날짜는 일기가 작성되었습니다.' : '아직 일기가 없습니다.'
-  eventCountBadge.textContent = `${items.length}개`
-
-  eventList.innerHTML = ''
-  if (!items.length) {
-    const empty = document.createElement('li')
-    empty.textContent = '일정이 없습니다.'
-    empty.className = 'muted'
-    eventList.appendChild(empty)
-    return
-  }
-
-  items.forEach((item) => {
-    const li = document.createElement('li')
-    li.innerHTML = `
-      <div class="badge">${item.event_date}</div>
-      <h4>${item.title}</h4>
-      <p class="muted small">${item.notes || '메모 없음'}</p>
-    `
-    const removeBtn = document.createElement('button')
-    removeBtn.className = 'ghost danger'
-    removeBtn.textContent = '삭제'
-    removeBtn.addEventListener('click', async () => {
-      const success = await deleteCalendarEvent(item.id, {
-        onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
-      })
-      if (success) {
-        await loadData()
-      }
-    })
-    li.appendChild(removeBtn)
-    eventList.appendChild(li)
-  })
-}
 
 async function loadData() {
   const start = new Date(state.month.getFullYear(), state.month.getMonth(), 1)
@@ -168,71 +108,19 @@ async function loadData() {
   const [events, diaryDates] = await Promise.all([
     fetchCalendarEvents({
       fromDate,
-      toDate,
-      onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
+      toDate
     }),
     fetchDiaryMarkers({
       fromDate,
-      toDate,
-      onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
+      toDate
     })
   ])
 
   state.events = events
   state.diaryDates = new Set(diaryDates)
-  modeBadge.textContent = getSupabaseClient() ? 'Supabase' : '로컬'
 
   renderCalendar()
-  renderEvents()
 }
-
-function initConfig() {
-  bootstrapConfig({
-    statusEl: connectionStatusEl,
-    urlInput: supabaseUrlInput,
-    keyInput: supabaseKeyInput
-  })
-  modeBadge.textContent = getSupabaseClient() ? 'Supabase' : '로컬'
-}
-
-configForm.addEventListener('submit', (event) => {
-  event.preventDefault()
-  const formData = new FormData(event.target)
-  const url = formData.get('supabaseUrl')
-  const key = formData.get('supabaseKey')
-  saveConfig({ url, key })
-  connectSupabase({ url, key }, connectionStatusEl)
-  modeBadge.textContent = 'Supabase'
-  loadData()
-})
-
-clearConfigBtn.addEventListener('click', () => {
-  clearConfig({ statusEl: connectionStatusEl, urlInput: supabaseUrlInput, keyInput: supabaseKeyInput })
-  modeBadge.textContent = '로컬'
-  loadData()
-})
-
-eventForm.addEventListener('submit', async (event) => {
-  event.preventDefault()
-  const formData = new FormData(event.target)
-  const payload = {
-    event_date: formData.get('eventDate'),
-    title: formData.get('eventTitle'),
-    notes: formData.get('eventNotes') || ''
-  }
-
-  await storeCalendarEvent(payload, {
-    onError: (msg) => setStatus(connectionStatusEl, msg, 'error')
-  })
-
-  state.selectedDate = payload.event_date
-  state.month = new Date(new Date(payload.event_date).getFullYear(), new Date(payload.event_date).getMonth(), 1)
-  event.target.reset()
-  event.target.eventDate.value = payload.event_date
-  // 최신 데이터를 다시 불러와 반영
-  await loadData()
-})
-
 prevMonthBtn.addEventListener('click', () => {
   state.month = new Date(state.month.getFullYear(), state.month.getMonth() - 1, 1)
   loadData()
@@ -243,10 +131,172 @@ nextMonthBtn.addEventListener('click', () => {
   loadData()
 })
 
+// 키보드 네비게이션 지원
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' && !e.target.matches('input, textarea')) {
+    prevMonthBtn.click()
+  } else if (e.key === 'ArrowRight' && !e.target.matches('input, textarea')) {
+    nextMonthBtn.click()
+  }
+})
+
+// ===== 날짜 상세 팝업 =====
+
+const dateDetailModal = document.querySelector('#date-detail-modal')
+const dateDetailTitle = document.querySelector('#date-detail-title')
+const dateDetailBody = document.querySelector('#date-detail-body')
+const closeDetailModal = document.querySelector('#close-detail-modal')
+
+function formatDateDisplay(dateStr) {
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
+  const today = new Date()
+  const isToday = formatDate(today) === dateStr
+  
+  if (isToday) {
+    return `오늘 (${month}월 ${day}일)`
+  }
+  return `${year}년 ${month}월 ${day}일 (${weekday})`
+}
+
+function getPriorityColor(priority) {
+  const colors = {
+    low: '#10b981',
+    medium: '#3b82f6',
+    high: '#f59e0b',
+    urgent: '#ef4444'
+  }
+  return colors[priority] || colors.medium
+}
+
+function getPriorityLabel(priority) {
+  const labels = {
+    low: '낮음',
+    medium: '보통',
+    high: '높음',
+    urgent: '긴급'
+  }
+  return labels[priority] || '보통'
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    todo: '할 일',
+    in_progress: '진행 중',
+    done: '완료',
+    cancelled: '취소'
+  }
+  return labels[status] || '할 일'
+}
+
+async function showDateDetail(dateStr) {
+  if (!dateDetailModal || !dateDetailBody) return
+
+  // 로딩 상태
+  dateDetailBody.innerHTML = '<div class="date-detail-loading">로딩 중...</div>'
+  dateDetailTitle.textContent = formatDateDisplay(dateStr)
+  dateDetailModal.style.display = 'flex'
+
+  try {
+    // 해당 날짜의 일정과 일기 가져오기
+    const [events, diaries] = await Promise.all([
+      Promise.resolve(state.events.filter(e => e.event_date === dateStr)),
+      fetchDiaries({ limit: 100 })
+    ])
+
+    const dateEvents = events || []
+    const dateDiary = diaries.find(d => d.entry_date === dateStr) || null
+
+    // HTML 생성
+    let html = ''
+
+    // 일정 섹션
+    html += `
+      <div class="date-detail-section">
+        <div class="date-detail-section-header">
+          <h4>일정 <span class="date-detail-count">${dateEvents.length}개</span></h4>
+        </div>
+        <div class="date-detail-events">
+    `
+
+    if (dateEvents.length === 0) {
+      html += '<div class="date-detail-empty">일정이 없습니다.</div>'
+    } else {
+      dateEvents.forEach((event) => {
+        const priorityColor = getPriorityColor(event.priority || 'medium')
+        html += `
+          <div class="date-detail-event-item">
+            <div class="date-detail-event-header">
+              <div class="date-detail-event-priority" style="background: ${priorityColor}"></div>
+              <div class="date-detail-event-title">${event.title || '제목 없음'}</div>
+            </div>
+            ${event.assignee ? `<div class="date-detail-event-meta">의뢰자: ${event.assignee}</div>` : ''}
+            ${event.status ? `<div class="date-detail-event-status">${getStatusLabel(event.status)}</div>` : ''}
+            ${event.notes ? `<div class="date-detail-event-notes">${event.notes}</div>` : ''}
+          </div>
+        `
+      })
+    }
+
+    html += `
+        </div>
+      </div>
+    `
+
+    // 일기 섹션
+    html += `
+      <div class="date-detail-section">
+        <div class="date-detail-section-header">
+          <h4>일기</h4>
+        </div>
+        <div class="date-detail-diary">
+    `
+
+    if (dateDiary) {
+      html += `
+        <div class="date-detail-diary-item">
+          <div class="date-detail-diary-title">${dateDiary.title || '제목 없음'}</div>
+          <div class="date-detail-diary-content">${dateDiary.content || ''}</div>
+        </div>
+      `
+    } else {
+      html += '<div class="date-detail-empty">일기가 없습니다.</div>'
+    }
+
+    html += `
+        </div>
+      </div>
+    `
+
+    dateDetailBody.innerHTML = html
+  } catch (error) {
+    console.error('날짜 상세 로딩 실패:', error)
+    dateDetailBody.innerHTML = '<div class="date-detail-error">데이터를 불러오는 중 오류가 발생했습니다.</div>'
+  }
+}
+
+function hideDateDetail() {
+  if (dateDetailModal) {
+    dateDetailModal.style.display = 'none'
+  }
+}
+
+// 팝업 닫기 이벤트
+closeDetailModal?.addEventListener('click', hideDateDetail)
+dateDetailModal?.querySelector('.date-detail-overlay')?.addEventListener('click', hideDateDetail)
+
+// ESC 키로 닫기
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && dateDetailModal?.style.display === 'flex') {
+    hideDateDetail()
+  }
+})
+
 document.addEventListener('DOMContentLoaded', () => {
   renderWeekdays()
-  initConfig()
   state.selectedDate = formatDate(today)
-  eventForm.eventDate.value = formatDate(today)
   loadData()
 })

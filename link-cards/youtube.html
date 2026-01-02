@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YouTube 링크 카드</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <section class="link-cards-container">
+    <div class="link-card" data-url="https://www.youtube.com/@example" data-platform="youtube">
+      <div class="link-card-image">
+        <img src="https://www.youtube.com/s/desktop/favicon.ico" alt="YouTube" onerror="this.src='https://cdn.simpleicons.org/youtube/FF0000'" />
+      </div>
+      <div class="link-card-content">
+        <div class="link-card-header">
+          <h3 class="link-card-title">YouTube</h3>
+          <span class="link-card-username">YouTube</span>
+        </div>
+        <div class="link-card-url">https://www.youtube.com/@example</div>
+        <div class="link-card-info">
+          <span class="link-card-badge">Videos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="link-card.js"></script>
+</body>
+</html>
+

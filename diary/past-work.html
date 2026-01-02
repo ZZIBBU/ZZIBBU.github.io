@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>지난 작업</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="past-work-body">
+  <div class="past-work-container">
+    <div class="past-work-header">
+      <h2>지난 작업</h2>
+      <button type="button" id="refresh-btn" class="icon-btn" aria-label="새로고침">↻</button>
+    </div>
+
+    <div class="past-work-content">
+      <div class="past-work-filters">
+        <button type="button" class="filter-btn active" data-filter="all">전체</button>
+        <button type="button" class="filter-btn" data-filter="done">완료</button>
+        <button type="button" class="filter-btn" data-filter="cancelled">취소</button>
+      </div>
+      <div class="past-work-list" id="past-work-list">
+        <div class="work-empty">지난 작업이 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./past-work.js"></script>
+</body>
+</html>

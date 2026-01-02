@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>작업 대시보드</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="work-dashboard-body">
+  <div class="work-dashboard-container">
+    <div class="work-dashboard-header">
+      <h2>작업 대시보드</h2>
+      <button type="button" id="refresh-btn" class="icon-btn" aria-label="새로고침">↻</button>
+    </div>
+
+    <div class="work-dashboard-content">
+      <!-- 오늘/내일 작업 -->
+      <section class="work-section">
+        <div class="work-section-header">
+          <h3>오늘/내일 작업</h3>
+          <span class="work-section-count" id="today-tomorrow-count">0개</span>
+        </div>
+        <div class="work-section-filters">
+          <button type="button" class="filter-btn active" data-filter="all">전체</button>
+          <button type="button" class="filter-btn" data-filter="todo">할 일</button>
+          <button type="button" class="filter-btn" data-filter="in_progress">진행 중</button>
+          <button type="button" class="filter-btn" data-filter="done">완료</button>
+        </div>
+        <div class="work-list" id="today-tomorrow-list">
+          <div class="work-empty">오늘/내일 작업이 없습니다.</div>
+        </div>
+      </section>
+
+      <!-- 이번주 작업 -->
+      <section class="work-section">
+        <div class="work-section-header">
+          <h3>이번주 작업</h3>
+          <span class="work-section-count" id="week-count">0개</span>
+        </div>
+        <div class="work-section-filters">
+          <button type="button" class="filter-btn active" data-filter="all">전체</button>
+          <button type="button" class="filter-btn" data-filter="todo">할 일</button>
+          <button type="button" class="filter-btn" data-filter="in_progress">진행 중</button>
+          <button type="button" class="filter-btn" data-filter="done">완료</button>
+        </div>
+        <div class="work-list" id="week-list">
+          <div class="work-empty">이번주 작업이 없습니다.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="./work-dashboard.js"></script>
+</body>
+</html>
