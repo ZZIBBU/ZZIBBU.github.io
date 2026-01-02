@@ -33,6 +33,20 @@
     <div class="calendar" id="calendar-grid"></div>
   </section>
 
+  <!-- 날짜 상세 팝업 -->
+  <div id="date-detail-modal" class="date-detail-modal" style="display: none;">
+    <div class="date-detail-overlay"></div>
+    <div class="date-detail-content">
+      <div class="date-detail-header">
+        <h3 id="date-detail-title">날짜 상세</h3>
+        <button type="button" id="close-detail-modal" class="icon-btn-small" aria-label="닫기">×</button>
+      </div>
+      <div class="date-detail-body" id="date-detail-body">
+        <!-- 내용이 여기에 동적으로 로드됩니다 -->
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./calendar.js"></script>
 </body>
 </html>
