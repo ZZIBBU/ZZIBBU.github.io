@@ -1,6 +1,8 @@
 import {
   fetchCalendarEvents,
-  formatDate
+  formatDate,
+  initSyncChannel,
+  listenToDataChanges
 } from './diary-utils.js'
 
 /**
@@ -31,7 +33,21 @@ class WorkDashboard {
 
   init() {
     this.setupEventListeners()
+    this.setupSyncChannel()
     this.loadData()
+  }
+
+  setupSyncChannel() {
+    // 동기화 채널 초기화
+    initSyncChannel()
+    
+    // 다른 팝업에서 데이터 변경 시 자동 새로고침
+    listenToDataChanges((message) => {
+      if (message.dataType === 'calendar') {
+        // 캘린더 데이터가 변경되었으면 다시 로드
+        this.loadData()
+      }
+    })
   }
 
   setupEventListeners() {

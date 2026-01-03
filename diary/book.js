@@ -4,7 +4,9 @@ import {
   storeDiary,
   shiftDay,
   fetchCalendarEvents,
-  fetchDiaryMarkers
+  fetchDiaryMarkers,
+  uploadImageToSupabase,
+  convertImageToBase64
 } from './diary-utils.js'
 
 /**
@@ -22,7 +24,15 @@ class BookPage {
       writePagesContainer: document.querySelector('#write-pages-container'),
       todayDateText: document.querySelector('#today-date strong'),
       diaryForm: document.querySelector('#diary-form'),
-      calendarSlot: document.querySelector('[data-slot="calendar"]')
+      calendarSlot: document.querySelector('[data-slot="calendar"]'),
+      imageInput: document.querySelector('#entry-image-input'),
+      imagePreview: document.querySelector('#image-preview'),
+      imagePreviewContainer: document.querySelector('#image-preview-container'),
+      removeImageBtn: document.querySelector('#remove-image-btn'),
+      diaryImageSlot: document.querySelector('[data-slot="diary-image"]'),
+      topBannerSlot: document.querySelector('[data-slot="top-banner"]'),
+      stackLeftSlot: document.querySelector('[data-slot="stack-left"]'),
+      bottomRightSlot: document.querySelector('[data-slot="bottom-right"]')
     }
 
     // 상태
@@ -84,6 +94,10 @@ class BookPage {
     // 폼 제출
     this.elements.diaryForm?.addEventListener('submit', (e) => this.handleSubmit(e))
 
+    // 이미지 업로드
+    this.elements.imageInput?.addEventListener('change', (e) => this.handleImageSelect(e))
+    this.elements.removeImageBtn?.addEventListener('click', () => this.removeImage())
+
     // 키보드 네비게이션
     document.addEventListener('keydown', (e) => {
       if (e.target.matches('input, textarea')) return
@@ -132,6 +146,7 @@ class BookPage {
   render() {
     this.renderDiarySlots()
     this.renderTodayDate()
+    this.renderDiaryImages()
     this.syncPageHeight()
   }
 
@@ -669,62 +684,6 @@ class BookPage {
     return pageBody.offsetHeight - formHeaderHeight - buttonRowHeight - fieldPadding
   }
 
-  // ===== 폼 제출 =====
-
-  async handleSubmit(event) {
-    event.preventDefault()
-    const formData = new FormData(event.target)
-
-    // 모든 페이지의 내용 합치기
-    let fullContent = formData.get('entryContent') || ''
-    this.state.writePages.slice(1).forEach((page) => {
-      const textarea = page.querySelector('.write-content-textarea')
-      if (textarea && textarea.value) {
-        fullContent += '\n' + textarea.value
-      }
-    })
-
-    const payload = {
-      entry_date: formData.get('entryDate'),
-      title: formData.get('entryTitle'),
-      content: fullContent.trim()
-    }
-
-    try {
-      const entry = await storeDiary(payload)
-
-      this.state.diaries.unshift(entry)
-      this.render()
-      this.loadCalendarData() // 캘린더도 업데이트
-
-      // 성공 메시지 표시
-      const submitBtn = event.target.querySelector('button[type="submit"]')
-      const originalText = submitBtn.textContent
-      submitBtn.textContent = '저장됨!'
-      submitBtn.style.background = '#10b981'
-
-      setTimeout(() => {
-        submitBtn.textContent = originalText
-        submitBtn.style.background = ''
-      }, 2000)
-
-      // 폼 리셋
-      event.target.reset()
-      const dateInput = event.target.querySelector('input[name="entryDate"]')
-      if (dateInput) {
-        dateInput.value = formatDate(new Date())
-      }
-
-      // 추가 페이지 제거
-      this.removeExtraPages(1)
-      this.state.currentWritePageIndex = 0
-      this.updateWritePagesVisibility()
-      this.syncPageHeight()
-    } catch (error) {
-      console.error('일기 저장 실패:', error)
-      alert('일기 저장에 실패했습니다.')
-    }
-  }
 
   // ===== 유틸리티 =====
 
@@ -864,6 +823,175 @@ class BookPage {
       this.renderCalendar()
     } catch (error) {
       console.error('캘린더 데이터 로딩 실패:', error)
+    }
+  }
+
+  // ===== 이미지 처리 =====
+
+  handleImageSelect(event) {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      if (this.elements.imagePreview) {
+        this.elements.imagePreview.src = e.target.result
+      }
+      if (this.elements.imagePreviewContainer) {
+        this.elements.imagePreviewContainer.style.display = 'block'
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  removeImage() {
+    if (this.elements.imageInput) {
+      this.elements.imageInput.value = ''
+    }
+    if (this.elements.imagePreview) {
+      this.elements.imagePreview.src = ''
+    }
+    if (this.elements.imagePreviewContainer) {
+      this.elements.imagePreviewContainer.style.display = 'none'
+    }
+  }
+
+  async handleSubmit(event) {
+    event.preventDefault()
+    const formData = new FormData(event.target)
+
+    // 모든 페이지의 내용 합치기
+    let fullContent = formData.get('entryContent') || ''
+    this.state.writePages.slice(1).forEach((page) => {
+      const textarea = page.querySelector('.write-content-textarea')
+      if (textarea && textarea.value) {
+        fullContent += '\n' + textarea.value
+      }
+    })
+
+    // 이미지 처리
+    let imageUrl = null
+    const imageFile = formData.get('entryImage')
+    if (imageFile && imageFile.size > 0) {
+      try {
+        // Supabase Storage에 업로드 시도, 실패하면 base64로 저장
+        imageUrl = await uploadImageToSupabase(imageFile) || await convertImageToBase64(imageFile)
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error)
+        // base64로 폴백
+        imageUrl = await convertImageToBase64(imageFile)
+      }
+    }
+
+    const payload = {
+      entry_date: formData.get('entryDate'),
+      title: formData.get('entryTitle'),
+      content: fullContent.trim(),
+      image_url: imageUrl
+    }
+
+    try {
+      const entry = await storeDiary(payload)
+
+      this.state.diaries.unshift(entry)
+      this.render()
+      this.loadCalendarData() // 캘린더도 업데이트
+
+      // 성공 메시지 표시
+      const submitBtn = event.target.querySelector('button[type="submit"]')
+      const originalText = submitBtn.textContent
+      submitBtn.textContent = '저장됨!'
+      submitBtn.style.background = '#10b981'
+
+      setTimeout(() => {
+        submitBtn.textContent = originalText
+        submitBtn.style.background = ''
+      }, 2000)
+
+      // 폼 리셋
+      event.target.reset()
+      const dateInput = event.target.querySelector('input[name="entryDate"]')
+      if (dateInput) {
+        dateInput.value = formatDate(new Date())
+      }
+      this.removeImage()
+
+      // 추가 페이지 제거
+      this.removeExtraPages(1)
+      this.state.currentWritePageIndex = 0
+      this.updateWritePagesVisibility()
+      this.syncPageHeight()
+    } catch (error) {
+      console.error('일기 저장 실패:', error)
+      alert('일기 저장에 실패했습니다.')
+    }
+  }
+
+  renderDiaryImages() {
+    // 최근 일기 중 이미지가 있는 것들을 찾아서 이미지 슬롯에 표시
+    const diariesWithImages = this.state.diaries
+      .filter(diary => diary.image_url)
+      .slice(0, 4) // 최대 4개
+
+    if (diariesWithImages.length === 0) return
+
+    // diary-image 슬롯 (오른쪽 페이지)
+    if (this.elements.diaryImageSlot && diariesWithImages[0]) {
+      const label = this.elements.diaryImageSlot.querySelector('.slot-label')
+      if (label) label.remove()
+      this.elements.diaryImageSlot.innerHTML = ''
+      const img = document.createElement('img')
+      img.src = diariesWithImages[0].image_url
+      img.style.width = '100%'
+      img.style.height = '100%'
+      img.style.objectFit = 'cover'
+      img.style.borderRadius = '4px'
+      this.elements.diaryImageSlot.appendChild(img)
+    }
+
+    // 왼쪽 페이지 이미지 슬롯들
+    if (diariesWithImages[1] && this.elements.topBannerSlot) {
+      const label = this.elements.topBannerSlot.querySelector('.slot-label')
+      if (label) label.remove()
+      this.elements.topBannerSlot.innerHTML = ''
+      const img = document.createElement('img')
+      img.src = diariesWithImages[1].image_url
+      img.style.width = '100%'
+      img.style.height = '100%'
+      img.style.objectFit = 'cover'
+      img.style.borderRadius = '4px'
+      this.elements.topBannerSlot.appendChild(img)
+    }
+
+    if (diariesWithImages[2] && this.elements.stackLeftSlot) {
+      const label = this.elements.stackLeftSlot.querySelector('.slot-label')
+      if (label) label.remove()
+      this.elements.stackLeftSlot.innerHTML = ''
+      const img = document.createElement('img')
+      img.src = diariesWithImages[2].image_url
+      img.style.width = '100%'
+      img.style.height = '100%'
+      img.style.objectFit = 'cover'
+      img.style.borderRadius = '4px'
+      this.elements.stackLeftSlot.appendChild(img)
+    }
+
+    if (diariesWithImages[3] && this.elements.bottomRightSlot) {
+      const label = this.elements.bottomRightSlot.querySelector('.slot-label')
+      if (label) label.remove()
+      this.elements.bottomRightSlot.innerHTML = ''
+      const img = document.createElement('img')
+      img.src = diariesWithImages[3].image_url
+      img.style.width = '100%'
+      img.style.height = '100%'
+      img.style.objectFit = 'cover'
+      img.style.borderRadius = '4px'
+      this.elements.bottomRightSlot.appendChild(img)
     }
   }
 }

@@ -2,7 +2,11 @@ import {
   fetchCalendarEvents,
   storeCalendarEvent,
   deleteCalendarEvent,
-  formatDate
+  formatDate,
+  initSyncChannel,
+  listenToDataChanges,
+  uploadImageToSupabase,
+  convertImageToBase64
 } from './diary-utils.js'
 
 /**
@@ -27,7 +31,11 @@ class EventManager {
       cancelEventBtn: document.querySelector('#cancel-event-btn'),
       deleteEventBtn: document.querySelector('#delete-event-btn'),
       eventFormTitle: document.querySelector('#event-form-title'),
-      menuBtn: document.querySelector('#menu-btn')
+      menuBtn: document.querySelector('#menu-btn'),
+      imageInput: document.querySelector('#event-image-input'),
+      imagePreview: document.querySelector('#event-image-preview'),
+      imagePreviewContainer: document.querySelector('#event-image-preview-container'),
+      removeImageBtn: document.querySelector('#remove-event-image-btn')
     }
 
     // 상태
@@ -47,8 +55,22 @@ class EventManager {
     }
     
     this.setupEventListeners()
+    this.setupSyncChannel()
     this.updateDateDisplay()
     this.loadData()
+  }
+
+  setupSyncChannel() {
+    // 동기화 채널 초기화
+    initSyncChannel()
+    
+    // 다른 팝업에서 데이터 변경 시 자동 새로고침
+    listenToDataChanges((message) => {
+      if (message.dataType === 'calendar') {
+        // 캘린더 데이터가 변경되었으면 다시 로드
+        this.loadData()
+      }
+    })
   }
 
   changeDate(days) {
@@ -109,6 +131,10 @@ class EventManager {
 
     // 폼 제출
     this.elements.eventForm?.addEventListener('submit', (e) => this.handleSubmit(e))
+
+    // 이미지 업로드
+    this.elements.imageInput?.addEventListener('change', (e) => this.handleImageSelect(e))
+    this.elements.removeImageBtn?.addEventListener('click', () => this.removeImage())
   }
 
   // ===== 데이터 로딩 =====
@@ -282,6 +308,14 @@ class EventManager {
     const notesTextarea = this.elements.eventForm.querySelector('#event-notes')
     if (notesTextarea) notesTextarea.value = event.notes || ''
 
+    // 이미지 표시
+    if (event.image_url && this.elements.imagePreview) {
+      this.elements.imagePreview.src = event.image_url
+      if (this.elements.imagePreviewContainer) {
+        this.elements.imagePreviewContainer.style.display = 'block'
+      }
+    }
+
     // 삭제 버튼 표시
     if (this.elements.deleteEventBtn) {
       this.elements.deleteEventBtn.style.display = 'block'
@@ -302,6 +336,40 @@ class EventManager {
     this.elements.eventForm.style.display = 'none'
     this.elements.eventListSection.style.display = 'block'
     this.elements.eventForm.reset()
+    this.removeImage()
+  }
+
+  handleImageSelect(event) {
+    const file = event.target.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      if (this.elements.imagePreview) {
+        this.elements.imagePreview.src = e.target.result
+      }
+      if (this.elements.imagePreviewContainer) {
+        this.elements.imagePreviewContainer.style.display = 'block'
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  removeImage() {
+    if (this.elements.imageInput) {
+      this.elements.imageInput.value = ''
+    }
+    if (this.elements.imagePreview) {
+      this.elements.imagePreview.src = ''
+    }
+    if (this.elements.imagePreviewContainer) {
+      this.elements.imagePreviewContainer.style.display = 'none'
+    }
   }
 
   // ===== 일정 저장/삭제 =====
@@ -310,13 +378,31 @@ class EventManager {
     event.preventDefault()
     const formData = new FormData(event.target)
 
+    // 이미지 처리
+    let imageUrl = null
+    const imageFile = formData.get('eventImage')
+    if (imageFile && imageFile.size > 0) {
+      try {
+        // Supabase Storage에 업로드 시도, 실패하면 base64로 저장
+        imageUrl = await uploadImageToSupabase(imageFile) || await convertImageToBase64(imageFile)
+      } catch (error) {
+        console.error('이미지 업로드 실패:', error)
+        // base64로 폴백
+        imageUrl = await convertImageToBase64(imageFile)
+      }
+    } else if (this.state.editingEvent && this.state.editingEvent.image_url) {
+      // 수정 시 기존 이미지 유지
+      imageUrl = this.state.editingEvent.image_url
+    }
+
     const payload = {
       title: formData.get('title'),
       event_date: formData.get('event_date'),
       assignee: formData.get('assignee') || null,
       priority: formData.get('priority') || 'medium',
       status: formData.get('status') || 'todo',
-      notes: formData.get('notes') || null
+      notes: formData.get('notes') || null,
+      image_url: imageUrl
     }
 
     try {
