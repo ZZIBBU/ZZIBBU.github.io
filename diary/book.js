@@ -75,6 +75,11 @@ class BookPage {
     this.setInitialPageState()
     this.loadData()
     this.initCalendar()
+    // 3초마다 자동 새로고침
+    this.autoRefreshInterval = setInterval(() => {
+      this.loadData()
+      this.loadCalendarData()
+    }, 3000)
   }
 
   setInitialPageState() {

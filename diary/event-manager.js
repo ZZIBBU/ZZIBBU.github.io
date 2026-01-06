@@ -58,6 +58,10 @@ class EventManager {
     this.setupSyncChannel()
     this.updateDateDisplay()
     this.loadData()
+    // 3초마다 자동 새로고침
+    this.autoRefreshInterval = setInterval(() => {
+      this.loadData()
+    }, 3000)
   }
 
   setupSyncChannel() {
