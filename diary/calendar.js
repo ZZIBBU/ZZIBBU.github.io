@@ -299,4 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWeekdays()
   state.selectedDate = formatDate(today)
   loadData()
+  // 3초마다 자동 새로고침
+  setInterval(() => {
+    loadData()
+  }, 3000)
 })

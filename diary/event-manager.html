@@ -68,6 +68,15 @@
               <textarea name="notes" id="event-notes" rows="4" placeholder="작업에 대한 상세 내용을 입력하세요..."></textarea>
             </label>
 
+            <label class="field">
+              <span>사진</span>
+              <input type="file" name="eventImage" id="event-image-input" accept="image/*" />
+              <div id="event-image-preview-container" style="margin-top: 10px; display: none;">
+                <img id="event-image-preview" style="max-width: 100%; max-height: 200px; border-radius: 4px;" />
+                <button type="button" id="remove-event-image-btn" style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">사진 제거</button>
+              </div>
+            </label>
+
             <div class="event-form-actions">
               <button type="button" id="delete-event-btn" class="ghost danger" style="display: none;">삭제</button>
               <div class="event-form-actions-right">

@@ -97,6 +97,14 @@
                           <span>내용</span>
                           <textarea name="entryContent" id="entry-content-textarea" rows="8" placeholder="자유롭게 기록하세요..." required></textarea>
                         </label>
+                        <label class="field">
+                          <span>사진</span>
+                          <input type="file" name="entryImage" id="entry-image-input" accept="image/*" />
+                          <div id="image-preview-container" style="margin-top: 10px; display: none;">
+                            <img id="image-preview" style="max-width: 100%; max-height: 200px; border-radius: 4px;" />
+                            <button type="button" id="remove-image-btn" style="margin-top: 8px; padding: 4px 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">사진 제거</button>
+                          </div>
+                        </label>
                         <div class="button-row end">
                           <button class="primary" type="submit">저장하기</button>
                         </div>

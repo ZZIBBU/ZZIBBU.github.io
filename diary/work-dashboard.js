@@ -1,6 +1,8 @@
 import {
   fetchCalendarEvents,
-  formatDate
+  formatDate,
+  initSyncChannel,
+  listenToDataChanges
 } from './diary-utils.js'
 
 /**
@@ -31,7 +33,25 @@ class WorkDashboard {
 
   init() {
     this.setupEventListeners()
+    this.setupSyncChannel()
     this.loadData()
+    // 3초마다 자동 새로고침
+    this.autoRefreshInterval = setInterval(() => {
+      this.loadData()
+    }, 3000)
+  }
+
+  setupSyncChannel() {
+    // 동기화 채널 초기화
+    initSyncChannel()
+    
+    // 다른 팝업에서 데이터 변경 시 자동 새로고침
+    listenToDataChanges((message) => {
+      if (message.dataType === 'calendar') {
+        // 캘린더 데이터가 변경되었으면 다시 로드
+        this.loadData()
+      }
+    })
   }
 
   setupEventListeners() {
@@ -237,10 +257,10 @@ class WorkDashboard {
 
   getPriorityColor(priority) {
     const colors = {
-      low: '#10b981',
-      medium: '#3b82f6',
-      high: '#f59e0b',
-      urgent: '#ef4444'
+      low: '#7FB069',
+      medium: '#5B9BD5',
+      high: '#D4A574',
+      urgent: '#D97794'
     }
     return colors[priority] || colors.medium
   }

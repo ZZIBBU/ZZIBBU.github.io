@@ -26,6 +26,10 @@ class PastWork {
   init() {
     this.setupEventListeners()
     this.loadData()
+    // 3초마다 자동 새로고침
+    this.autoRefreshInterval = setInterval(() => {
+      this.loadData()
+    }, 3000)
   }
 
   setupEventListeners() {
@@ -130,10 +134,10 @@ class PastWork {
 
   getPriorityColor(priority) {
     const colors = {
-      low: '#10b981',
-      medium: '#3b82f6',
-      high: '#f59e0b',
-      urgent: '#ef4444'
+      low: '#7FB069',
+      medium: '#5B9BD5',
+      high: '#D4A574',
+      urgent: '#D97794'
     }
     return colors[priority] || colors.medium
   }

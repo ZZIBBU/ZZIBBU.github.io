@@ -310,6 +310,7 @@ export async function fetchDiaries({ limit = 50, onError } = {}) {
 }
 
 export async function storeDiary(payload, { onError } = {}) {
+  let result
   if (supabase) {
     const resolved = loadResolved()
     const diary = resolved.diary || { table: 'diary_entries', dateKey: 'entry_date' }
@@ -320,7 +321,12 @@ export async function storeDiary(payload, { onError } = {}) {
       .select()
       .single()
 
-    if (!error) return data
+    if (!error) {
+      result = data
+      // 데이터 변경 브로드캐스트
+      broadcastDataChange('diary', { action: 'create', data: result })
+      return result
+    }
 
     console.error(error)
     if (isMissingTableError(error)) {
@@ -340,7 +346,10 @@ export async function storeDiary(payload, { onError } = {}) {
   const entry = { id: crypto.randomUUID?.() || String(Date.now()), ...payload }
   local.diaries.unshift(entry)
   saveLocalData(local)
-  return entry
+  result = entry
+  // 데이터 변경 브로드캐스트
+  broadcastDataChange('diary', { action: 'create', data: result })
+  return result
 }
 
 // ===== Calendar Events (추가로 필요하면) =====
@@ -384,13 +393,19 @@ export async function fetchCalendarEvents({ fromDate, toDate, limit = 200, onErr
 }
 
 export async function storeCalendarEvent(payload, { onError } = {}) {
+  let result
   if (supabase) {
     const resolved = loadResolved()
     const cal = resolved.calendar || { table: 'calendar_events', dateKey: 'event_date' }
 
     const { data, error } = await supabase.from(cal.table).insert([payload]).select().single()
 
-    if (!error) return data
+    if (!error) {
+      result = data
+      // 데이터 변경 브로드캐스트
+      broadcastDataChange('calendar', { action: 'create', data: result })
+      return result
+    }
 
     console.error(error)
     if (isMissingTableError(error)) {
@@ -410,7 +425,10 @@ export async function storeCalendarEvent(payload, { onError } = {}) {
   const entry = { id: crypto.randomUUID?.() || String(Date.now()), ...payload }
   local.events.push(entry)
   saveLocalData(local)
-  return entry
+  result = entry
+  // 데이터 변경 브로드캐스트
+  broadcastDataChange('calendar', { action: 'create', data: result })
+  return result
 }
 
 export async function deleteCalendarEvent(id, { onError } = {}) {
@@ -420,7 +438,11 @@ export async function deleteCalendarEvent(id, { onError } = {}) {
 
     const { error } = await supabase.from(cal.table).delete().eq('id', id)
 
-    if (!error) return true
+    if (!error) {
+      // 데이터 변경 브로드캐스트
+      broadcastDataChange('calendar', { action: 'delete', id: id })
+      return true
+    }
 
     console.error(error)
     if (isMissingTableError(error)) {
@@ -439,6 +461,8 @@ export async function deleteCalendarEvent(id, { onError } = {}) {
   const local = loadLocalData()
   local.events = (local.events || []).filter((event) => event.id !== id)
   saveLocalData(local)
+  // 데이터 변경 브로드캐스트
+  broadcastDataChange('calendar', { action: 'delete', id: id })
   return true
 }
 
@@ -507,4 +531,89 @@ export function getConfigDefaults() {
 
 export function getSupabaseClient() {
   return supabase
+}
+
+// ===== 팝업 간 실시간 동기화 =====
+const SYNC_CHANNEL_NAME = 'diary-sync-channel'
+let syncChannel = null
+
+export function initSyncChannel() {
+  if (typeof BroadcastChannel !== 'undefined') {
+    syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME)
+  }
+  return syncChannel
+}
+
+export function getSyncChannel() {
+  if (!syncChannel) {
+    syncChannel = initSyncChannel()
+  }
+  return syncChannel
+}
+
+export function broadcastDataChange(type, data) {
+  const channel = getSyncChannel()
+  if (channel) {
+    channel.postMessage({
+      type: 'data-change',
+      dataType: type, // 'calendar' or 'diary'
+      data: data,
+      timestamp: Date.now()
+    })
+  }
+}
+
+export function listenToDataChanges(callback) {
+  const channel = getSyncChannel()
+  if (channel) {
+    channel.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'data-change') {
+        callback(event.data)
+      }
+    })
+  }
+}
+
+// ===== 이미지 업로드 =====
+
+export async function uploadImageToSupabase(imageFile) {
+  if (!supabase) return null
+
+  try {
+    // 파일명 생성
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${imageFile.name.split('.').pop()}`
+    const filePath = `diary-images/${fileName}`
+
+    // Supabase Storage에 업로드
+    const { data, error } = await supabase.storage
+      .from('diary-images')
+      .upload(filePath, imageFile, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('이미지 업로드 오류:', error)
+      return null
+    }
+
+    // 공개 URL 가져오기
+    const { data: urlData } = supabase.storage
+      .from('diary-images')
+      .getPublicUrl(filePath)
+
+    return urlData?.publicUrl || null
+  } catch (error) {
+    console.error('이미지 업로드 실패:', error)
+    return null
+  }
+}
+
+export async function convertImageToBase64(imageFile) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(imageFile)
+  })
 }
